@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <style>
+        .game_heading{
+            padding: 8px 0 8px 0;
+            border: 2px solid black;
+            border-radius: 2px;
+        }
+        
+        .game_heading h1{
+            color: red;
+            text-align: center;
+        }
+        
+        .game_main{
+            display: flex;
+        }
+        
+        .game_information{
+            margin: 12px 0;
+        }
+        
+        .game_information_web{
+            border: 3px solid blue;
+            border-radius: 8px;
+            padding: 2px 8px;
+            width: 230px;
+        }
+        .game_information_web-heading{
+            font-size: 22px;
+        }
+        .game_information_web p{
+            margin: 0 0;
+        }
+        
+        .game_information_author{
+            border: 3px solid blue;
+            border-radius: 8px;
+            padding: 2px 8px;
+            width: 230px;
+        }
+        
+        .game_information_author-heading{
+            font-size: 22px;
+        }
+        
+        .game_information_author-description p{
+            margin: 4px 0;
+        }
+        
+        .game_information_instruction{
+            border: 3px solid blue;
+            border-radius: 8px;
+            padding: 2px 8px;
+            width: 230px;
+        }
+        
+        .game_information_instruction p{
+            margin: 4px 0;
+        }
+        
+        .game_playing{
+            margin: 12px 12px;
+        }
+        .game_playing_screen{
+            width: 900px;
+            height: 480px;
+            border: 1px solid black;
+            border-radius: 8px;
+            background-color: #070707;
+        }
+        
+        .playing_history{
+            margin: 12px 0;
+            width: 230px;
+            
+        }
+        
+        .playing_history_user{
+            border-bottom: 0px solid black;
+        }
+        
+        #playing_history_attributes{
+            border: 1px solid black;
+            width: 320px;
+            margin: 24px 0;
+        }
+
+        .game_playing_functions{
+            display: flex;
+            justify-content: space-around;
+        }
+    </style>
+    <body>
+        <div class="game_heading">
+            <h1>TRÒ CHƠI RẮN SĂN MỒI</h1>
+        </div>
+        <div class="game_main">
+            <div class="game_information">
+                <div class="game_information game_information_web">
+                    <h3 class="game_information game_information_web-heading">
+                        <b>Giới thiệu trò chơi</b>
+                    </h3>
+                    <p class="game_information game_information_web-description">
+                        Đây là một trò chơi cổ điển, rắn săn mồi, hãy cho rắn ăn các vật phẩm để lấy điểm và tránh né vật cản, bờ tường
+                    </p>
+                </div>
+                <div class="game_information game_information_author">
+                    <h3 class="game_information game_information_author-heading">
+                        <b>Nhóm 1</b>
+                    </h3>
+                    <div class="game_information game_information_author-description">
+                        <p><b>Lớp học phần</b>: Lập trình Python</p>
+                        <p><b>Mã lớp học phần</b>: 010100087202</p>
+                    </div>
+                </div>
+                <div class="game_information game_information_instruction">
+                    <h3 class="game_information game_information_instruction-heading"><b>Hướng dẫn</b></h3>
+                    <p class="game_information game_information_instruction-description">
+                        iwbbfbiqfiqwhfoin
+                    </p>
+                </div>
+            </div>
+            <div class="game_playing">
+                <div class="game_playing game_playing_screen">
+                    <canvas id="gameCanvas" width="900" height="480"></canvas>
+                    <div>Score: <span id="score">0</span></div>
+                </div>
+                <div class="game_playing game_playing_functions">
+                    <div class="game_playing game_playing_functions_difficulty">
+                        <label for="difficulty">Chọn độ khó:</label>
+                        <select id="difficulty">
+                            <option value="Dễ" selected>Dễ</option>
+                            <option value="Trung bình">Trung bình</option>
+                            <option value="Khó">Khó</option>
+                        </select>
+                    </div>
+                    <button id="startGameButton" class="game_playing game_playting_functions_start">Bắt đầu</button>
+                </div>
+            </div>
+            <div id="playing_history_attributes" class="playing_history">
+                <div class="playing_history playing_history_user">
+        
+                </div>
+            </div>
+        </div>
+        <script>
+            const canvas = document.getElementById("gameCanvas");
+            const ctx = canvas.getContext("2d");
+            const startGameButton = document.getElementById("startGameButton")
+            const box = 20; // Size of each snake part
+            const difficultyDropdown = document.getElementById("difficulty")
+
+            let snake = [{ x: 5 * box, y: 5 * box }];
+            let direction = "RIGHT";
+            let score = 0;
+            let gameInterval = null;
+            let isGameRunning = false;
+
+            const fruit = {
+                x: Math.floor(Math.random() * (canvas.width / box)) * box,
+                y: Math.floor(Math.random() * (canvas.height / box)) * box,
+            };
+
+            // Draw snake
+            function drawSnake() {
+                snake.forEach((part) => {
+                    ctx.fillStyle = "green";
+                    ctx.fillRect(part.x, part.y, box, box);
+                    ctx.strokeStyle = "black";
+                    ctx.strokeRect(part.x, part.y, box, box);
+                });
+            }
+
+            // Draw fruit
+            function drawFruit() {
+                ctx.fillStyle = "red";
+                ctx.fillRect(fruit.x, fruit.y, box, box);
+            }
+
+            // Move the snake
+            function moveSnake() {
+                const head = { ...snake[0] };
+
+                if (direction === "RIGHT") head.x += box;
+                if (direction === "LEFT") head.x -= box;
+                if (direction === "UP") head.y -= box;
+                if (direction === "DOWN") head.y += box;
+
+                snake.unshift(head);
+
+                // Check if snake eats the fruit
+                if (head.x === fruit.x && head.y === fruit.y) {
+                    score += 10;
+                    document.getElementById("score").innerText = score;
+                    fruit.x = Math.floor(Math.random() * (canvas.width / box)) * box;
+                    fruit.y = Math.floor(Math.random() * (canvas.height / box)) * box;
+                } else {
+                    snake.pop(); // Remove tail if no fruit eaten
+                }
+            }
+
+            // Check for collisions
+            function checkCollision() {
+                const head = snake[0];
+
+                // Wall collision
+                if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
+                    gameOver();
+                }
+
+                // Self collision
+                for (let i = 1; i < snake.length; i++) {
+                    if (head.x === snake[i].x && head.y === snake[i].y) {
+                        gameOver();
+                    }
+                }
+            }
+
+            function getDifficultySpeed(difficultyLevel){
+                switch(difficultyLevel) {
+                    case 'Dễ':
+                        return 150;
+                    case 'Trung bình':
+                        return 300;
+                    case 'Khó':
+                        return 400;
+                    default:
+                        return 150;
+                }
+            }
+
+            function generateRandomSnake(){
+                const randomLength = Math.floor(Math.random() * 6) + 5;
+                const randomSpeed = Math.floor(Math.random() * 51) + 100;  // Tốc độ ngẫu nhiên từ 100ms đến 150ms
+
+                // Tạo một con rắn ngẫu nhiên
+                let newSnake = [];
+                let startX = Math.floor(Math.random() * (canvas.width / box)) * box;
+                let startY = Math.floor(Math.random() * (canvas.height / box)) * box;
+
+                for (let i = 0; i < randomLength; i++) {
+                    newSnake.push({ x: startX - i * box, y: startY }); // Sinh ra rắn ngẫu nhiên ở vị trí ban đầu
+                }
+
+                if (newSnake[0].x < 0 || newSnake[0].x >= canvas.width || newSnake[0].y < 0 || newSnake[0].y >= canvas.height) {
+                    return generateRandomSnake(); // Nếu rắn ra ngoài phạm vi, sinh lại
+                }
+            
+
+                return { snake: newSnake, speed: randomSpeed };
+            }
+            // Game over
+            function gameOver() {
+                clearInterval(gameInterval); // Dừng game loop
+                isGameRunning = false; // Đặt trạng thái game về chưa chạy
+                alert("Game Over! Your Score: " + score);
+
+                // Đặt lại trạng thái mặc định của trò chơi
+                snake = [{ x: 5 * box, y: 5 * box }]; // Rắn trở lại vị trí ban đầu
+                direction = "RIGHT"; // Hướng mặc định
+                score = 0; // Reset điểm
+                document.getElementById("score").innerText = score;
+
+                fruit.x = Math.floor(Math.random() * (canvas.width / box)) * box;
+                fruit.y = Math.floor(Math.random() * (canvas.height / box)) * box;
+
+                // Xóa canvas để sẵn sàng cho game mới
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawFruit();
+                drawSnake();
+            }
+
+            // Game loop
+            function gameLoop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawFruit();
+                moveSnake();
+                drawSnake();
+                checkCollision();
+            }
+
+            //Start Game
+            function startGame(){
+                if(!isGameRunning){
+                    isGameRunning = true;
+                    const difficultyLevel = document.getElementById("difficulty").value;
+
+                    // Lấy tốc độ từ hàm phân loại độ khó
+                    const difficultySpeed = getDifficultySpeed(difficultyLevel);
+
+                    // Nếu chọn chế độ "Khó", sinh rắn ngẫu nhiên
+                    if (difficultyLevel === "Khó") {
+                        const randomSnakeData = generateRandomSnake();
+                        snake = randomSnakeData.snake; // Gán con rắn ngẫu nhiên vào biến snake
+                        gameInterval = setInterval(gameLoop, randomSnakeData.speed); // Gọi game loop với tốc độ ngẫu nhiên
+                    } else {
+                    // Nếu không phải chế độ "Khó", sử dụng tốc độ đã chọn
+                    gameInterval = setInterval(gameLoop, difficultySpeed);
+                    }
+                }
+            }
+            // Change direction
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+                if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+                if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+                if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+            });
+
+            // Sự kiện nhấn nút Bắt đầu
+            startGameButton.addEventListener("click", startGame);
+        </script>
+    </body>
+</html>
