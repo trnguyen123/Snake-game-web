@@ -12,6 +12,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <style>
+        html {
+            background-color: #90EAFF
+        }
         .game_heading{
             padding: 8px 0 8px 0;
             border: 2px solid black;
@@ -101,6 +104,28 @@
             display: flex;
             justify-content: space-around;
         }
+
+        #startGameButton{
+            width: 120px;
+            height: 38px;
+            background-color: #85E18F;
+            border: 1px solid #022E1F;
+            border-radius: 8px;
+        }
+
+        .playing_history_user_title h5{
+            text-align: center;
+        }
+
+        .playing_history_user_child{
+            margin: 4px 8px;
+            border: 1px solid black;
+            border-radius: 8px;
+            padding: 12px 2px;
+            background-color: white;
+            width: 290px;
+            text-align:center;
+        }
     </style>
     <body>
         <div class="game_heading">
@@ -135,7 +160,7 @@
             <div class="game_playing">
                 <div class="game_playing game_playing_screen">
                     <canvas id="gameCanvas" width="900" height="480"></canvas>
-                    <div>Score: <span id="score">0</span></div>
+                    <div style="font-size:24px">Score: <span id="score">0</span></div>
                 </div>
                 <div class="game_playing game_playing_functions">
                     <div class="game_playing game_playing_functions_difficulty">
@@ -151,7 +176,29 @@
             </div>
             <div id="playing_history_attributes" class="playing_history">
                 <div class="playing_history playing_history_user">
-        
+                    <div class="playing_history playing_history_user_title">
+                        <h3>Lịch sử chơi</h5>
+                    </div>
+                    <div class="playing_history playing_history_user_child">
+                        <div class="playing_history playing_history_user_child_difficulty">
+                            <span class="playing_history playing_history_user_child_difficulty_span">Mức độ:</span>
+                            <span class="playing_history playing_history_user_child_difficulty_value">Dễ<span>
+                        </div>
+                        <div class="playing_history playing_history_user_child_score">
+                            <span class="playing_history playing_history_user_child_difficulty_span">Điểm:</span>
+                            <span class="playing_history playing_history_user_child_difficulty_value">80<span>
+                        </div>
+                    </div>
+                    <div class="playing_history playing_history_user_child">
+                        <div class="playing_history playing_history_user_child_difficulty">
+                            <span class="playing_history playing_history_user_child_difficulty_span">Mức độ:</span>
+                            <span class="playing_history playing_history_user_child_difficulty_value">Dễ<span>
+                        </div>
+                        <div class="playing_history playing_history_user_child_score">
+                            <span class="playing_history playing_history_user_child_difficulty_span">Điểm:</span>
+                            <span class="playing_history playing_history_user_child_difficulty_value">80<span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -161,6 +208,7 @@
             const startGameButton = document.getElementById("startGameButton")
             const box = 20; // Size of each snake part
             const difficultyDropdown = document.getElementById("difficulty")
+            const randomSnakes = [];
 
             let snake = [{ x: 5 * box, y: 5 * box }];
             let direction = "RIGHT";
@@ -176,7 +224,7 @@
             // Draw snake
             function drawSnake() {
                 snake.forEach((part) => {
-                    ctx.fillStyle = "green";
+                    ctx.fillStyle = "yellow";
                     ctx.fillRect(part.x, part.y, box, box);
                     ctx.strokeStyle = "black";
                     ctx.strokeRect(part.x, part.y, box, box);
@@ -231,35 +279,99 @@
             function getDifficultySpeed(difficultyLevel){
                 switch(difficultyLevel) {
                     case 'Dễ':
-                        return 150;
+                        return 200;
                     case 'Trung bình':
-                        return 300;
-                    case 'Khó':
-                        return 400;
-                    default:
                         return 150;
+                    case 'Khó':
+                        return 100;
+                    default:
+                        return 200;
                 }
             }
 
-            function generateRandomSnake(){
+            function generateRandomSnakes() {
                 const randomLength = Math.floor(Math.random() * 6) + 5;
-                const randomSpeed = Math.floor(Math.random() * 51) + 100;  // Tốc độ ngẫu nhiên từ 100ms đến 150ms
-
-                // Tạo một con rắn ngẫu nhiên
+                const colors = ["blue", "yellow", "purple", "orange", "pink"];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)]; // Chọn màu ngẫu nhiên
+            
                 let newSnake = [];
                 let startX = Math.floor(Math.random() * (canvas.width / box)) * box;
                 let startY = Math.floor(Math.random() * (canvas.height / box)) * box;
-
+            
                 for (let i = 0; i < randomLength; i++) {
-                    newSnake.push({ x: startX - i * box, y: startY }); // Sinh ra rắn ngẫu nhiên ở vị trí ban đầu
-                }
-
-                if (newSnake[0].x < 0 || newSnake[0].x >= canvas.width || newSnake[0].y < 0 || newSnake[0].y >= canvas.height) {
-                    return generateRandomSnake(); // Nếu rắn ra ngoài phạm vi, sinh lại
+                    newSnake.push({ x: startX - i * box, y: startY });
                 }
             
+                // Kiểm tra rắn hợp lệ
+                for (let i = 0; i < 5; i++) {
+                    if (
+                        newSnake[0].x >= 0 &&
+                        newSnake[0].x < canvas.width &&
+                        newSnake[0].y >= 0 &&
+                        newSnake[0].y < canvas.height
+                    ) {
+                        return {
+                            snake: newSnake,
+                            color: randomColor, // Thêm màu sắc
+                            speed: Math.floor(Math.random() * 51) + 100,
+                        };
+                    }
+            
+                    // Sinh lại nếu không hợp lệ
+                    startX = Math.floor(Math.random() * (canvas.width / box)) * box;
+                    startY = Math.floor(Math.random() * (canvas.height / box)) * box;
+                    newSnake = [];
+                    for (let i = 0; i < randomLength; i++) {
+                        newSnake.push({ x: startX - i * box, y: startY });
+                    }
+                }
+            
+                // Trả về mặc định nếu không hợp lệ
+                return {
+                    snake: [{ x: 5 * box, y: 5 * box }],
+                    color: randomColor,
+                    speed: 150,
+                };
+            }
+            
 
-                return { snake: newSnake, speed: randomSpeed };
+            // Vẽ các con rắn ngẫu nhiên
+            function drawRandomSnakes() {
+                randomSnakes.forEach((randomSnake) => {
+                    randomSnake.body.forEach((part) => {
+                        ctx.fillStyle = randomSnake.color;
+                        ctx.fillRect(part.x, part.y, box, box);
+                        ctx.strokeStyle = "black";
+                        ctx.strokeRect(part.x, part.y, box, box);
+                    });
+                });
+            }
+
+            function moveRandomSnakes() {
+                randomSnakes.forEach((randomSnake) => {
+                    const head = { ...randomSnake.body[0] };
+                    const randomDirection = ["UP", "DOWN", "LEFT", "RIGHT"][Math.floor(Math.random() * 4)];
+            
+                    if (randomDirection === "RIGHT") head.x += box;
+                    if (randomDirection === "LEFT") head.x -= box;
+                    if (randomDirection === "UP") head.y -= box;
+                    if (randomDirection === "DOWN") head.y += box;
+            
+                    randomSnake.body.unshift(head);
+                    randomSnake.body.pop();
+                });
+            }
+
+            function checkSnakeCollision() {
+                const head = snake[0];
+            
+                randomSnakes.forEach((randomSnake) => {
+                    randomSnake.body.forEach((part) => {
+                        if (head.x === part.x && head.y === part.y) {
+                            gameOver();
+                        }
+                    });
+                });
             }
             // Game over
             function gameOver() {
@@ -288,27 +400,33 @@
                 drawFruit();
                 moveSnake();
                 drawSnake();
+                moveRandomSnakes(); // Di chuyển rắn ngẫu nhiên
+                drawRandomSnakes(); // Vẽ rắn ngẫu nhiên
                 checkCollision();
+                checkSnakeCollision(); // Kiểm tra va chạm với rắn ngẫu nhiên
             }
 
             //Start Game
             function startGame(){
-                if(!isGameRunning){
+                if (!isGameRunning) {
                     isGameRunning = true;
                     const difficultyLevel = document.getElementById("difficulty").value;
-
-                    // Lấy tốc độ từ hàm phân loại độ khó
+            
                     const difficultySpeed = getDifficultySpeed(difficultyLevel);
-
-                    // Nếu chọn chế độ "Khó", sinh rắn ngẫu nhiên
+            
                     if (difficultyLevel === "Khó") {
-                        const randomSnakeData = generateRandomSnake();
-                        snake = randomSnakeData.snake; // Gán con rắn ngẫu nhiên vào biến snake
-                        gameInterval = setInterval(gameLoop, randomSnakeData.speed); // Gọi game loop với tốc độ ngẫu nhiên
-                    } else {
-                    // Nếu không phải chế độ "Khó", sử dụng tốc độ đã chọn
-                    gameInterval = setInterval(gameLoop, difficultySpeed);
+                        for (let i = 0; i < 3; i++) { // Sinh 3 con rắn ngẫu nhiên
+                            const randomSnakeData = generateRandomSnakes();
+                            randomSnakes.push({
+                                body: randomSnakeData.snake,
+                                color: randomSnakeData.color,
+                                speed: randomSnakeData.speed,
+                            });
+                        }
                     }
+            
+                    // Bắt đầu vòng lặp game
+                    gameInterval = setInterval(gameLoop, difficultySpeed);
                 }
             }
             // Change direction
