@@ -175,32 +175,8 @@
                 </div>
             </div>
             <div id="playing_history_attributes" class="playing_history">
-                <div class="playing_history playing_history_user">
-                    <div class="playing_history playing_history_user_title">
-                        <h3>Lịch sử chơi</h5>
-                    </div>
-                    <div class="playing_history playing_history_user_child">
-                        <div class="playing_history playing_history_user_child_difficulty">
-                            <span class="playing_history playing_history_user_child_difficulty_span">Mức độ:</span>
-                            <span class="playing_history playing_history_user_child_difficulty_value">Dễ<span>
-                        </div>
-                        <div class="playing_history playing_history_user_child_score">
-                            <span class="playing_history playing_history_user_child_difficulty_span">Điểm:</span>
-                            <span class="playing_history playing_history_user_child_difficulty_value">80<span>
-                        </div>
-                    </div>
-                    <div class="playing_history playing_history_user_child">
-                        <div class="playing_history playing_history_user_child_difficulty">
-                            <span class="playing_history playing_history_user_child_difficulty_span">Mức độ:</span>
-                            <span class="playing_history playing_history_user_child_difficulty_value">Dễ<span>
-                        </div>
-                        <div class="playing_history playing_history_user_child_score">
-                            <span class="playing_history playing_history_user_child_difficulty_span">Điểm:</span>
-                            <span class="playing_history playing_history_user_child_difficulty_value">80<span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <!-- Phần lịch sử chơi sẽ được JavaScript cập nhật động -->
+            </div>            
         </div>
         <script>
             const canvas = document.getElementById("gameCanvas");
@@ -377,7 +353,16 @@
             function gameOver() {
                 clearInterval(gameInterval); // Dừng game loop
                 isGameRunning = false; // Đặt trạng thái game về chưa chạy
+
+                // Lưu điểm và mức độ chơi vào localStorage
+                const difficultyElement = document.getElementById("difficulty");
+                const difficulty = difficultyElement ? difficultyElement.value : "Không xác định";
+                saveScore(score, difficulty);
+
                 alert("Game Over! Your Score: " + score);
+
+                // Hiển thị lịch sử chơi sau khi lưu
+                displayPlayingHistory();
 
                 // Đặt lại trạng thái mặc định của trò chơi
                 snake = [{ x: 5 * box, y: 5 * box }]; // Rắn trở lại vị trí ban đầu
@@ -385,6 +370,7 @@
                 score = 0; // Reset điểm
                 document.getElementById("score").innerText = score;
 
+                // Reset vị trí của quả
                 fruit.x = Math.floor(Math.random() * (canvas.width / box)) * box;
                 fruit.y = Math.floor(Math.random() * (canvas.height / box)) * box;
 
@@ -439,6 +425,83 @@
 
             // Sự kiện nhấn nút Bắt đầu
             startGameButton.addEventListener("click", startGame);
+
+            function saveScore(score, difficulty) {
+                // Gửi yêu cầu POST tới API Django
+                fetch('/api/save-history/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken() // Lấy token CSRF
+                    },
+                    body: JSON.stringify({ score: score, difficulty: difficulty })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error("Không thể lưu lịch sử chơi");
+                })
+                .then(data => {
+                    console.log("Lịch sử chơi đã được lưu:", data);
+                })
+                .catch(error => {
+                    console.error("Lỗi:", error);
+                });
+            }
+                // Hàm hiển thị lịch sử chơi
+            function displayPlayingHistory() {
+                fetch('/api/get-history/')
+                    .then(response => response.json())
+                    .then(history => {
+                        const historyContainer = document.getElementById('playing_history_attributes');
+                        historyContainer.innerHTML = '';
+            
+                        if (history.length === 0) {
+                            historyContainer.innerHTML = '<p>Chưa có lịch sử chơi nào!</p>';
+                            return;
+                        }
+            
+                        history.forEach((entry, index) => {
+                            const { difficulty, score, played_at } = entry;
+            
+                            const historyItem = `
+                                <div class="playing_history playing_history_user">
+                                    <div class="playing_history playing_history_user_title">
+                                        <h3>Lần chơi ${index + 1}</h3>
+                                    </div>
+                                    <div class="playing_history playing_history_user_child">
+                                        <div class="playing_history playing_history_user_child_difficulty">
+                                            <span class="playing_history playing_history_user_child_difficulty_span">Mức độ:</span>
+                                            <span class="playing_history playing_history_user_child_difficulty_value">${difficulty}</span>
+                                        </div>
+                                        <div class="playing_history playing_history_user_child_score">
+                                            <span class="playing_history playing_history_user_child_difficulty_span">Điểm:</span>
+                                            <span class="playing_history playing_history_user_child_difficulty_value">${score}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+            
+                            historyContainer.innerHTML += historyItem;
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Lỗi khi lấy lịch sử chơi:", error);
+                    });
+            }
+                
+
+            // Gọi hàm hiển thị khi tải trang
+            window.onload = displayPlayingHistory;
+            // Hàm lấy CSRF token từ cookie
+            function getCSRFToken() {
+                const cookieValue = document.cookie
+                    .split('; ')
+                    .find(row => row.startsWith('csrftoken='))
+                    ?.split('=')[1];
+                return cookieValue || '';
+            }
         </script>
     </body>
 </html>
