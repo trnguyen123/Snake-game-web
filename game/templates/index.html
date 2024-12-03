@@ -126,6 +126,39 @@
             width: 290px;
             text-align:center;
         }
+        .pagination_controls {
+            display: flex;                
+            justify-content: center;      
+            align-items: center;          
+            gap: 10px;                    
+            margin-top: 20px;             
+        }
+
+        .pagination_button {
+            padding: 8px 12px;            
+            border: 1px solid #ddd;      
+            border-radius: 4px;           
+            background-color: #f9f9f9;    
+            color: #333;                  
+            cursor: pointer;              
+            font-size: 14px;              
+            transition: all 0.3s ease;    
+        }
+
+        .pagination_button:hover {
+            background-color: #007BFF;    
+            color: #fff;                  
+            border-color: #007BFF;        
+        }
+
+        .pagination_button.active {
+            background-color: #007BFF;    
+            color: #fff;                  
+            font-weight: bold;           
+            border-color: #0056b3;        
+            pointer-events: none;         
+        }
+
     </style>
     <body>
         <div class="game_heading">
@@ -174,9 +207,14 @@
                     <button id="startGameButton" class="game_playing game_playting_functions_start">Bắt đầu</button>
                 </div>
             </div>
-            <div id="playing_history_attributes" class="playing_history">
-                <!-- Phần lịch sử chơi sẽ được JavaScript cập nhật động -->
-            </div>            
+            <div id="playing_history_attributes">
+                <div class="playing_history">
+                    <!-- Lịch sử chơi sẽ được JavaScript thêm vào đây -->
+                </div>
+                <div id="pagination_controls" class="pagination_controls">
+                    <!-- Các nút phân trang sẽ được JavaScript thêm vào đây -->
+                </div>
+            </div> 
         </div>
         <script>
             const canvas = document.getElementById("gameCanvas");
@@ -449,47 +487,94 @@
                     console.error("Lỗi:", error);
                 });
             }
-                // Hàm hiển thị lịch sử chơi
+            // Hàm hiển thị lịch sử
             function displayPlayingHistory() {
-                fetch('/api/get-history/')
-                    .then(response => response.json())
-                    .then(history => {
-                        const historyContainer = document.getElementById('playing_history_attributes');
-                        historyContainer.innerHTML = '';
-            
-                        if (history.length === 0) {
-                            historyContainer.innerHTML = '<p>Chưa có lịch sử chơi nào!</p>';
-                            return;
-                        }
-            
-                        history.forEach((entry, index) => {
-                            const { difficulty, score, played_at } = entry;
-            
-                            const historyItem = `
-                                <div class="playing_history playing_history_user">
-                                    <div class="playing_history playing_history_user_title">
-                                        <h3>Lần chơi ${index + 1}</h3>
+                const itemsPerPage = 3; // Số lượng mục mỗi trang
+                let currentPage = 1; // Trang hiện tại
+                let totalPages = 0; // Tổng số trang
+
+                // Chọn phần tử DOM
+                const historyContainer = document.querySelector('.playing_history'); // Chỉ lấy phần lịch sử
+                const paginationControls = document.getElementById('pagination_controls'); // Lấy phần phân trang riêng
+
+                // Hàm tải dữ liệu lịch sử chơi từ API
+                function fetchHistory() {
+                    fetch('/api/get-history/')
+                        .then(response => response.json())
+                        .then(history => {
+                            totalPages = Math.ceil(history.length / itemsPerPage);
+
+                            if (history.length === 0) {
+                                historyContainer.innerHTML = '<p>Chưa có lịch sử chơi nào!</p>';
+                                paginationControls.innerHTML = ''; // Xóa phân trang nếu không có dữ liệu
+                                return;
+                            }
+
+                            // Hiển thị dữ liệu trang đầu tiên
+                            renderPage(history, currentPage);
+                            createPaginationControls(history);
+                        })
+                        .catch(error => {
+                            console.error("Lỗi khi lấy lịch sử chơi:", error);
+                        });
+                }
+
+                // Hàm hiển thị dữ liệu cho một trang
+                function renderPage(history, page) {
+                    historyContainer.innerHTML = ''; // Chỉ xóa lịch sử, không ảnh hưởng phân trang
+                    const start = (page - 1) * itemsPerPage;
+                    const end = start + itemsPerPage;
+
+                    const pageItems = history.slice(start, end);
+                    pageItems.forEach((entry, index) => {
+                        const { difficulty, score, played_at } = entry;
+
+                        const historyItem = `
+                            <div class="playing_history playing_history_user">
+                                <div class="playing_history playing_history_user_title">
+                                    <h3>Lần chơi ${start + index + 1}</h3>
+                                </div>
+                                <div class="playing_history playing_history_user_child">
+                                    <div class="playing_history playing_history_user_child_difficulty">
+                                        <span class="playing_history playing_history_user_child_difficulty_span">Mức độ:</span>
+                                        <span class="playing_history playing_history_user_child_difficulty_value">${difficulty}</span>
                                     </div>
-                                    <div class="playing_history playing_history_user_child">
-                                        <div class="playing_history playing_history_user_child_difficulty">
-                                            <span class="playing_history playing_history_user_child_difficulty_span">Mức độ:</span>
-                                            <span class="playing_history playing_history_user_child_difficulty_value">${difficulty}</span>
-                                        </div>
-                                        <div class="playing_history playing_history_user_child_score">
-                                            <span class="playing_history playing_history_user_child_difficulty_span">Điểm:</span>
-                                            <span class="playing_history playing_history_user_child_difficulty_value">${score}</span>
-                                        </div>
+                                    <div class="playing_history playing_history_user_child_score">
+                                        <span class="playing_history playing_history_user_child_difficulty_span">Điểm:</span>
+                                        <span class="playing_history playing_history_user_child_difficulty_value">${score}</span>
                                     </div>
                                 </div>
-                            `;
-            
-                            historyContainer.innerHTML += historyItem;
-                        });
-                    })
-                    .catch(error => {
-                        console.error("Lỗi khi lấy lịch sử chơi:", error);
+                            </div>
+                        `;
+
+                        historyContainer.innerHTML += historyItem;
                     });
+                }
+
+                // Hàm tạo điều khiển phân trang
+                function createPaginationControls(history) {
+                    paginationControls.innerHTML = ''; // Xóa phân trang cũ
+
+                    for (let i = 1; i <= totalPages; i++) {
+                        const pageButton = document.createElement('button');
+                        pageButton.textContent = i;
+                        pageButton.classList.add('pagination_button');
+                        if (i === currentPage) pageButton.classList.add('active');
+                        pageButton.addEventListener('click', () => {
+                            currentPage = i;
+                            renderPage(history, currentPage);
+                            createPaginationControls(history); // Cập nhật lại nút phân trang
+                        });
+                        paginationControls.appendChild(pageButton);
+                    }
+                }
+
+                // Gọi hàm tải lịch sử
+                fetchHistory();
             }
+
+            // Gọi hàm hiển thị lịch sử
+            displayPlayingHistory();
                 
 
             // Gọi hàm hiển thị khi tải trang
